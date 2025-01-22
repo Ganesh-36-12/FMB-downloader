@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask PDF Generator</title>
+    <script>
+        const talukMapping = {{ districts|tojson }};
+        function updateTaluks() {
+            const district = document.getElementById('dropdown1').value;
+            const talukSelect = document.getElementById('dropdown2');
+            talukSelect.innerHTML = '<option value="" disabled selected>Select</option>';
+            if (talukMapping[district]) {
+                talukMapping[district].forEach(taluk => {
+                    const option = document.createElement('option');
+                    option.value = taluk;
+                    option.textContent = taluk;
+                    talukSelect.appendChild(option);
+                });
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Dynamic PDF Generator</h1>
+    <form action="/download" method="post" target="_blank">
+        <label for="dropdown1">District:</label>
+        <select name="dropdown1" id="dropdown1" onchange="updateTaluks()">
+            <option value="" disabled selected>Select</option>
+            <option value="villupuram">Villupuram</option>
+            <option value="kalakurichi">Kalakurichi</option>
+            <option value="cuddalore">Cuddalore</option>
+        </select><br><br>
+        <label for="dropdown2">Taluk:</label>
+        <select name="dropdown2" id="dropdown2">
+            <option value="" disabled selected>Select</option>
+        </select><br><br>
+        <label for="input1">Village Code:</label>
+        <input type="text" name="input1" id="input1" required><br><br>
+        <label for="input2">Survey Number:</label>
+        <input type="text" name="input2" id="input2" required><br><br>
+        <button type="submit">Download PDF</button>
+    </form>
+</body>
+</html>
