@@ -1,43 +1,142 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Flask PDF Generator</title>
-    <script>
-        const talukMapping = {{ districts|tojson }};
-        function updateTaluks() {
-            const district = document.getElementById('dropdown1').value;
-            const talukSelect = document.getElementById('dropdown2');
-            talukSelect.innerHTML = '<option value="" disabled selected>Select</option>';
-            if (talukMapping[district]) {
-                talukMapping[district].forEach(taluk => {
-                    const option = document.createElement('option');
-                    option.value = taluk;
-                    option.textContent = taluk;
-                    talukSelect.appendChild(option);
-                });
-            }
-        }
-    </script>
+    <title>FMB Free download</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h1>Dynamic PDF Generator</h1>
-    <form action="/download" method="post" target="_blank">
-        <label for="dropdown1">District:</label>
-        <select name="dropdown1" id="dropdown1" onchange="updateTaluks()">
-            <option value="" disabled selected>Select</option>
-            <option value="villupuram">Villupuram</option>
-            <option value="kalakurichi">Kalakurichi</option>
-            <option value="cuddalore">Cuddalore</option>
-        </select><br><br>
-        <label for="dropdown2">Taluk:</label>
-        <select name="dropdown2" id="dropdown2">
-            <option value="" disabled selected>Select</option>
-        </select><br><br>
-        <label for="input1">Village Code:</label>
-        <input type="text" name="input1" id="input1" required><br><br>
-        <label for="input2">Survey Number:</label>
-        <input type="text" name="input2" id="input2" required><br><br>
-        <button type="submit">Download PDF</button>
-    </form>
+  <div class = 'container'>
+      <h1>Generate FMB</h1>
+      <form class="form-group" method="POST" action="/download" target="_blank">
+        
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="DISTRICT_DD">District</label>
+            </div>
+            <select class="custom-select" id="DISTRICT_DD" name="DISTRICT_DD">
+              <option value="">-- Select District --</option>
+            </select>
+        </div>
+        
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="TALUK_DD">Taluk  </label>
+            </div>
+            <select class="custom-select" id="TALUK_DD" name="TALUK_DD">
+              <option value="">-- Select Taluk --</option>
+            </select>
+        </div>
+        
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="VILLAGE_DD">Village</label>
+            </div>
+            <select class="custom-select" id="VILLAGE_DD" name="VILLAGE_DD">
+              <option value="">-- Select Village --</option>
+            </select>
+        </div>
+
+          
+          <div class="input-group input-group-sm mb-3">
+              <div class="input-group-prepend">
+                <span class="input-group-text" id="inputGroup-sizing-sm">Survey No</span>
+              </div>
+              <input for="input2" type="text" id="input2" name="input2" class="form-control" aria-label="Small" aria-describedby="inputGroup-sizing-sm">
+          </div>
+          
+          <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="SIZE_DD">Paper size</label>
+            </div>
+            <select class="custom-select" id="SIZE_DD" name="SIZE_DD">
+              <option selected  value="A4">A4</option>
+              <option value="A3">A3</option>
+              <option value="Legal">Legal</option>
+            </select>
+        </div>
+          
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+              <label class="input-group-text" for="SCALE_DD">Paper size</label>
+            </div>
+            <select class="custom-select" id="SCALE_DD" name="SCALE_DD">
+              <option selected="" value="500">500</option>
+              <option value="1000">1000</option>
+              <option value="2000">2000</option>
+              <option value="5000">5000</option>
+            </select>
+        </div>
+  
+          <button class="btn btn-primary btn-lg btn-block" type="submit">Download</button>
+      </form>
+  
+      <script>
+          $(document).ready(function () {
+              // Load districts on page load
+              $.getJSON('/get-districts', function (data) {
+                  const districts = data || [];
+                  console.log(data)
+                  districts.forEach(district => {
+                      $('#DISTRICT_DD').append(`<option value="${district.dcode}">${district.dname}</option>`);
+                  });
+              });
+  
+              // Load taluks when district is selected
+              $('#DISTRICT_DD').change(function () {
+                  const district = $(this).val();
+                  $('#TALUK_DD').empty().append('<option value="">-- Select Taluk --</option>').prop('disabled', !district);
+                  $('#VILLAGE_DD').empty().append('<option value="">-- Select Village --</option>').prop('disabled', true);
+  
+                  if (district) {
+                      $.ajax({
+                          url: '/get-taluks',
+                          type: 'POST',
+                          contentType: 'application/json',
+                          data: JSON.stringify({ district }),
+                          dataType: 'json',
+                          success: function (data) {
+                              console.log(data);
+                              const taluks = data || [];
+                              taluks.forEach(taluk => {
+                                  $('#TALUK_DD').append(`<option value="${taluk.tcode}">${taluk.tname}</option>`);
+                              });
+                          },
+                          error: function (xhr, status, error) {
+                              console.error('Error fetching taluks:', error);
+                          }
+                      });
+                  }
+              });
+  
+              // Load villages when taluk is selected
+              $('#TALUK_DD').change(function () {
+                  const taluk = $(this).val();
+                  $('#VILLAGE_DD').empty().append('<option value="">-- Select Village --</option>').prop('disabled', !taluk);
+  
+                  if (taluk) {
+                      const district = $('#DISTRICT_DD').val();
+                      $.ajax({
+                          url: '/get-villages',
+                          type: 'POST',
+                          contentType: 'application/json',
+                          data: JSON.stringify({ district, taluk }),
+                          dataType: 'json',
+                          success: function (data) {
+                              console.log(data);
+                              const villages = data || [];
+                              villages.forEach(village => {
+                                  $('#VILLAGE_DD').append(`<option value="${village.villagecode}">${village.villagename}</option>`);
+                              });
+                          },
+                          error: function (xhr, status, error) {
+                              console.error('Error fetching villages:', error);
+                          }
+                      });
+                  }
+              });
+          });
+      </script>
+     </div>
 </body>
 </html>
